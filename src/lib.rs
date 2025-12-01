@@ -11,7 +11,7 @@ use arrow::record_batch::RecordBatch;
 use parquet::arrow::ArrowWriter;
 use parquet::basic::{Compression, GzipLevel, ZstdLevel};
 use parquet::file::properties::WriterProperties;
-use rand::distributions::{Alphanumeric, Distribution, Uniform};
+use rand::distributions::{Distribution, Uniform, Alphanumeric};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use std::fs::File;
