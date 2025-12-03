@@ -1,3 +1,4 @@
+use arrow::compute::min;
 use clap::{Parser, ValueEnum};
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
@@ -15,9 +16,9 @@ struct Args {
     #[arg(short, long, default_value = "./output")]
     output_dir: PathBuf,
 
-    /// Number of files to generate
-    #[arg(short, long, default_value_t = 1)]
-    num_files: usize,
+    /// Total number of rows to generate
+    #[arg(short, long, default_value_t = 1000)]
+    total_rows: usize,
 
     /// Target file size per file
     #[arg(short, long, default_value = "512MB")]
@@ -103,7 +104,7 @@ fn main() -> Result<()> {
         println!("  Compression: {:?}", config.compression);
         println!("  Random seed: {}", config.seed);
         println!("  Output directory: {:?}", args.output_dir);
-        println!("  Number of files: {}", args.num_files);
+        println!("  Total rows to generate: {}", args.total_rows);
         println!("  Batch size: {}", args.batch_size);
         println!();
     }
@@ -119,7 +120,7 @@ fn main() -> Result<()> {
     }
 
     // Create progress bar
-    let progress = ProgressBar::new(args.num_files as u64);
+    let progress = ProgressBar::new(args.total_rows as u64);
     progress.set_style(
         ProgressStyle::default_bar()
             .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} files ({eta})")
@@ -130,11 +131,11 @@ fn main() -> Result<()> {
     let writer = ParquetWriter::new(config.clone());
     let total_start = Instant::now();
 
-    for file_num in 0..args.num_files {
+    let mut num_files = 0;
+    let mut total_rows_written = 0;
+    while true {
         let start_time = Instant::now();
-
-        // Generate unique seed for each file
-        let file_seed = args.seed + file_num as u64;
+        let file_seed = args.seed + num_files as u64;
         let mut file_generator = DataGenerator::new(Config::new(
             args.vector_dim,
             args.scalar_len,
@@ -142,22 +143,32 @@ fn main() -> Result<()> {
             config.compression,
             file_seed,
         ));
-
-        // Create file path
-        let file_name = format!("vector_data_{:04}.parquet", file_num);
+        let file_name = format!("vector_data_{:08}.parquet", num_files);
         let file_path = args.output_dir.join(file_name);
-
         if args.verbose {
-            println!("Generating file {}: {:?}", file_num + 1, file_path);
+            println!("Generating file {}: {:?}", num_files + 1, file_path);
         }
 
-        // Write data to file
+        let remaining_rows = args.total_rows - total_rows_written;
+        let num_rows_to_write = {
+            if remaining_rows>rows_per_file {
+            rows_per_file
+        } else {
+            remaining_rows
+        }};
+    
+
         let rows_written = writer.write_to_file(
             file_path.to_str().unwrap(),
             &mut file_generator,
-            rows_per_file,
+            num_rows_to_write,
             args.batch_size,
         )?;
+        total_rows_written += rows_written;
+        if total_rows_written >= args.total_rows {
+            break;
+        }
+        num_files += 1;
 
         let elapsed = start_time.elapsed();
         let file_size = std::fs::metadata(&file_path)?.len();
@@ -171,15 +182,15 @@ fn main() -> Result<()> {
                 rows_written as f64 / elapsed.as_secs_f64()
             );
         }
-
-        progress.inc(1);
+        progress.inc(rows_written as u64);
     }
+
 
     progress.finish_with_message("Data generation complete!");
 
     let total_elapsed = total_start.elapsed();
     println!("\nTotal time: {:.2?}", total_elapsed);
-    println!("Generated {} files in {:?}", args.num_files, args.output_dir);
+    println!("Generated {} files in {:?}", num_files, args.output_dir);
 
     Ok(())
 }
