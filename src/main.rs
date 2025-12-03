@@ -79,7 +79,6 @@ fn parse_file_size(size_str: &str) -> Result<u64> {
 
 fn main() -> Result<()> {
     let args = Args::parse();
-
     // Parse file size
     let target_file_size = parse_file_size(&args.file_size)?;
 
@@ -103,6 +102,7 @@ fn main() -> Result<()> {
         println!("  Target file size: {}", ByteSize::b(target_file_size));
         println!("  Compression: {:?}", config.compression);
         println!("  Random seed: {}", config.seed);
+        println!("  Prefix: {}", args.prefix);
         println!("  Output directory: {:?}", args.output_dir);
         println!("  Total rows to generate: {}", args.total_rows);
         println!("  Batch size: {}", args.batch_size);
@@ -143,7 +143,7 @@ fn main() -> Result<()> {
             config.compression,
             file_seed,
         ));
-        let file_name = format!("vector_data_{:08}.parquet", num_files);
+        let file_name = format!("{}-{:08}.parquet", args.prefix, num_files);
         let file_path = args.output_dir.join(file_name);
         if args.verbose {
             println!("Generating file {}: {:?}", num_files + 1, file_path);

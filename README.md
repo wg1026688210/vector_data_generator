@@ -43,18 +43,18 @@ vector_data_gen --help
 Usage: vector_data_gen [OPTIONS]
 
 Options:
-  -o, --output-dir <OUTPUT_DIR>  Output directory for generated files [default: ./output]
-  -n, --num-files <NUM_FILES>    Number of files to generate [default: 1]
-  -f, --file-size <FILE_SIZE>    Target file size per file [default: 512MB]
-  -c, --compression <COMPRESSION>
-                                  Compression type to use [default: snappy] [possible values: snappy, gzip, lz4, zstd, uncompressed]
-      --vector-dim <VECTOR_DIM>  Vector dimension [default: 1024]
-      --scalar-len <SCALAR_LEN>  Scalar string length in bytes [default: 32]
-      --seed <SEED>              Random seed for reproducible data [default: 42]
-  -b, --batch-size <BATCH_SIZE>  Batch size for data generation [default: 10000]
-  -v, --verbose                  Enable verbose output
-  -h, --help                     Print help
-  -V, --version                  Print version
+  -o, --output-dir <OUTPUT_DIR>     Output directory for generated files [default: ./output]
+  -n, --total-rows <TOTAL_ROWS>     Total number of rows to generate [default: 1000]
+  -f, --file-size <FILE_SIZE>       Target file size per file [default: 512MB]
+  -c, --compression <COMPRESSION>   Compression type to use [default: snappy] [possible values: snappy, gzip, lz4, zstd, uncompressed]
+      --vector-dim <VECTOR_DIM>     Vector dimension [default: 1024]
+      --scalar-len <SCALAR_LEN>     Scalar string length in bytes [default: 32]
+      --seed <SEED>                 Random seed for reproducible data [default: 42]
+  -b, --batch-size <BATCH_SIZE>     Batch size for data generation [default: 10000]
+  -v, --verbose                     Enable verbose output
+      --prefix <PREFIX>             Prefix for generated file names [default: vector_data]
+  -h, --help                        Print help
+  -V, --version                     Print version
 ```
 
 ### Examples
@@ -62,7 +62,7 @@ Options:
 1. Generate 5 files with 1GB each using Zstd compression:
 
 ```bash
-cargo run --release -- --num-files 5 --file-size 1GB --compression zstd --verbose
+cargo run --release --  --total-rows 100000  --prefix wgcn1 --file-size 200mb  --compression zstd --verbose
 ```
 
 2. Generate files with custom vector dimension and scalar length:
@@ -123,5 +123,4 @@ The tool is optimized for performance:
 - Efficient Parquet writing with compression
 
 ## License
-
-MIT OR Apache-2.0
+Apache-2.0
